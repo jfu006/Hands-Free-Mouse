@@ -3,11 +3,12 @@
 #endif
 
 #include <util/twi.h>
+#include <util/delay.h>
 
 #define I2C_READ 0x01
 #define I2C_WRITE 0x00
 
-#define F_SCL 100000UL // SCL frequency
+#define F_SCL 400000 /*100000UL*/ // SCL frequency
 #define Prescaler 1
 #define TWBR_val ((((F_CPU / F_SCL) / Prescaler) - 16 ) / 2)
 
@@ -15,13 +16,14 @@ void sendUart(uint8_t data){
 	if(USART_IsSendReady(0)){
 		USART_Flush(0);
 		USART_Send(data,0);
+		_delay_ms(5);
 	}
 }
 
 
 void i2c_init(void)
 {
-	TWBR = (uint8_t)TWBR_val;
+	TWBR = 0x0C; //(uint8_t)TWBR_val;
 }
 
 void i2c_stop(void)
@@ -37,7 +39,7 @@ uint8_t i2c_start(unsigned char address)
 	// transmit START condition
 	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
 	// wait for end of transmission
-	while( !(TWCR & (1<<TWINT)) ); /*{ sendUart('s');}*/
+	while( !(TWCR & (1<<TWINT)) ); 
 	
 	// check if the start condition was successfully transmitted
 	if((TWSR & 0xF8) != TW_START){ return 1; }
@@ -47,11 +49,11 @@ uint8_t i2c_start(unsigned char address)
 	// start transmission of address
 	TWCR = (1<<TWINT) | (1<<TWEN);
 	// wait for end of transmission
-	while( !(TWCR & (1<<TWINT)) );/* { sendUart('e'); }*/
+	while( !(TWCR & (1<<TWINT)) );
 	
 	// check if the device has acknowledged the READ / WRITE mode
 	uint8_t twst = TW_STATUS & 0xF8;
-	if ( (twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK) ) return 1;
+	if ( (twst != TW_MT_SLA_ACK) /*&& (twst != TW_MR_SLA_ACK)*/ ) return 1;
 	
 	return 0;
 }
@@ -63,7 +65,7 @@ uint8_t i2c_write(uint8_t data)
 	// start transmission of data
 	TWCR = (1<<TWINT) | (1<<TWEN);
 	// wait for end of transmission
-	while( !(TWCR & (1<<TWINT)) ) ;/*{ sendUart('w'); }*/
+	while( !(TWCR & (1<<TWINT)) ) ;
 	
 	if( (TWSR & 0xF8) != TW_MT_DATA_ACK ){ return 1; }
 	
