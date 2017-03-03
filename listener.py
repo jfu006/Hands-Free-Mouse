@@ -33,25 +33,3 @@ while True:
 
 	result = subprocess.check_output(output, shell=True)
 	#print(result)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
